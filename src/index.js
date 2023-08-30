@@ -1,7 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./index.less";
-//import App from "./App";
+import App from "./App";
+
+/* ANTD-MOBILE */
+import { ConfigProvider } from "antd-mobile";
+import zhCN from "antd-mobile/es/locales/zh-CN";
 
 /* 改变 REM 换算比例 */
 import "lib-flexible";
@@ -23,7 +26,7 @@ import "./index.less";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <>
-    <div className="box">知乎日报</div>
-  </>
+  <ConfigProvider locale={zhCN}>
+    <App />
+  </ConfigProvider>
 );

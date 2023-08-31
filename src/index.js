@@ -2,6 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 
+/* REDUX */
+import { Provider } from 'react-redux';
+import store from './store';
+
 /* ANTD-MOBILE */
 import { ConfigProvider } from "antd-mobile";
 import zhCN from "antd-mobile/es/locales/zh-CN";
@@ -27,6 +31,8 @@ import "./index.less";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <ConfigProvider locale={zhCN}>
-    <App />
+    <Provider store={store}>
+      <App />
+    </Provider>
   </ConfigProvider>
 );

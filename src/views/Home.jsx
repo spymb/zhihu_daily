@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import HomeHead from "../components/HomeHead";
-import _ from "../assets/utils";
-import { Swiper, Image } from "antd-mobile";
-import { Link } from "react-router-dom";
-import api from '../api';
+import _ from '../assets/utils';
 import './Home.less';
+import { Swiper, Image, Divider, DotLoading } from 'antd-mobile';
+import { Link } from 'react-router-dom';
+import api from '../api';
+import NewsItem from "../components/NewsItem";
+import SkeletonAgain from "../components/SkeletonAgain";
 
 const Home = () => {
   const [today, setToday] = useState(_.formatTime(null, "{0}{1}{2}"));
   const [bannerData, setBannerData] = useState([]);
   const [newsList, setNewsList] = useState([]);
+  const loadMore = useRef();
 
   /* 第一次渲染完毕:向服务器发送数据请求 */
   useEffect(() => {
@@ -27,6 +30,30 @@ const Home = () => {
       } catch (_) {}
     })();
   }, []);
+
+  /* 第一次渲染完毕:设置监听器,实现触底加载 */
+  useEffect(() => {
+    let ob = new IntersectionObserver(async changes => {
+        let { isIntersecting } = changes[0];
+        if (isIntersecting) {
+            // 加载更多的按钮出现在视口中「也就是触底了」
+            try {
+                let time = newsList[newsList.length - 1]['date'];
+                let res = await api.queryNewsBefore(time);
+                newsList.push(res);
+                setNewsList([...newsList]);
+            } catch (_) { }
+        }
+    });
+    let loadMoreBox = loadMore.current;
+    ob.observe(loadMore.current);
+
+    // 在组件销毁释放的时候:手动销毁监听器
+    return () => {
+        ob.unobserve(loadMoreBox); //loadMore.current=null
+        ob = null;
+    };
+}, []);
 
   return (
     <div className="home-box">
@@ -53,6 +80,43 @@ const Home = () => {
             })}
           </Swiper>
         ) : null}
+      </div>
+
+      {/* 新闻列表 */}
+      {newsList.length === 0 ? (
+        <SkeletonAgain />
+      ) : (
+        <>
+          {newsList.map((item, index) => {
+            let { date, stories } = item;
+            return (
+              <div className="news-box" key={date}>
+                {index !== 0 ? (
+                  <Divider contentPosition="left">
+                    {_.formatTime(date, "{1}月{2}日")}
+                  </Divider>
+                ) : null}
+                <div className="list">
+                  {stories.map((cur) => {
+                    return <NewsItem key={cur.id} info={cur} />;
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {/* 加载更多 */}
+      <div
+        className="loadmore-box"
+        ref={loadMore}
+        style={{
+          display: newsList.length === 0 ? "none" : "block",
+        }}
+      >
+        <DotLoading />
+        数据加载中
       </div>
     </div>
   );

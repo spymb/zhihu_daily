@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { Form, Input } from "antd-mobile";
+import React, { useState, useEffect } from "react";
+import { Form, Input, Toast } from "antd-mobile";
 import "./Login.less";
 import ButtonAgain from "../components/ButtonAgain";
 import NavBarAgain from "../components/NavBarAgain";
 import _ from "../assets/utils";
+import api from "../api";
 
 /* 自定义表单校验规则 */
 const validate = {
@@ -24,25 +25,75 @@ const validate = {
 };
 
 const Login = function Login(props) {
-  /* 状态 */
   const [formIns] = Form.useForm();
+  /* 验证码按钮的状态 */
   const [disabled, setDisabled] = useState(false);
   const [sendText, setSendText] = useState("发送验证码");
 
   /* 发送验证码 */
+  let timer = null,
+    num = 31;
+  const countdown = () => {
+    num--;
+    if (num === 0) {
+      clearInterval(timer);
+      timer = null;
+      // 重置验证码按钮状态
+      setSendText(`发送验证码`);
+      setDisabled(false);
+      return;
+    }
+    setSendText(`${num}秒后重发`);
+  };
   const send = async () => {
     try {
       await formIns.validateFields(["phone"]);
-      let phone = formIns.getFieldValue("phone");
+      const phone = formIns.getFieldValue("phone");
+      const { code } = await api.sendPhoneCode(phone);
+
+      // 发送失败
+      if (+code !== 0) {
+        Toast.show({
+          icon: "fail",
+          content: "发送失败",
+        });
+        return;
+      }
+
       // 发送成功
       setDisabled(true);
+      countdown();
+      if (!timer) timer = setInterval(countdown, 1000);
     } catch (_) {}
   };
+  // 组件销毁的时候:把没有清除的定时器干掉
+  useEffect(() => {
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+  }, []);
 
   /* 表单提交 */
   const submit = async () => {
     try {
       await formIns.validateFields();
+      const { phone, code } = formIns.getFieldsValue();
+      const { code: codeHttp, token } = await api.login(phone, code);
+
+      // 登录失败
+      if (+codeHttp !== 0) {
+        Toast.show({
+          icon: "fail",
+          content: "登录失败",
+        });
+        formIns.resetFields(["code"]);
+        return;
+      }
+
+      // 登录成功:存储Token、存储登录者信息到redux、提示、跳转
     } catch (_) {}
   };
 

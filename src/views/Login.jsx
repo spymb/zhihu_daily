@@ -5,6 +5,8 @@ import ButtonAgain from "../components/ButtonAgain";
 import NavBarAgain from "../components/NavBarAgain";
 import _ from "../assets/utils";
 import api from "../api";
+import { connect } from "react-redux";
+import action from "../store/action";
 
 /* 自定义表单校验规则 */
 const validate = {
@@ -25,6 +27,9 @@ const validate = {
 };
 
 const Login = function Login(props) {
+  const { queryUserInfoAsync, navigate, usp } = props;
+  console.log(props)
+
   const [formIns] = Form.useForm();
   /* 验证码按钮的状态 */
   const [disabled, setDisabled] = useState(false);
@@ -94,6 +99,15 @@ const Login = function Login(props) {
       }
 
       // 登录成功:存储Token、存储登录者信息到redux、提示、跳转
+      _.storage.set("tk", token);
+      await queryUserInfoAsync(); //派发任务,同步redux中的状态信息
+      Toast.show({
+        icon: "success",
+        content: "登录/注册成功",
+      });
+
+      let to = usp.get("to");
+      to ? navigate(to, { replace: true }) : navigate(-1);
     } catch (_) {}
   };
 
@@ -142,4 +156,4 @@ const Login = function Login(props) {
   );
 };
 
-export default Login;
+export default connect(null, action.base)(Login);

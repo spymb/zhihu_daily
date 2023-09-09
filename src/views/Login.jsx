@@ -103,7 +103,7 @@ const Login = function Login(props) {
       await queryUserInfoAsync(); //派发任务,同步redux中的状态信息
       Toast.show({
         icon: "success",
-        content: "登录/注册成功",
+        content: "登录成功",
       });
 
       let to = usp.get("to");

@@ -28,7 +28,6 @@ const validate = {
 
 const Login = function Login(props) {
   const { queryUserInfoAsync, navigate, usp } = props;
-  console.log(props)
 
   const [formIns] = Form.useForm();
   /* 验证码按钮的状态 */
